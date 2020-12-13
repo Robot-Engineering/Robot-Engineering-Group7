@@ -51,11 +51,12 @@ class Document:
 
     def save(self):
         file_name = filedialog.asksaveasfilename()
-        graphics = []
         if file_name:
-            for graphic in self.draw_area.graphic_list.stack:
-                t = graphic.__dict__
-                t.pop('draw_area')
+            graphics = []
+            all_graphics = self.draw_area.graphics + self.draw_area.graphic_list.stack
+            for graphic in all_graphics:
+                t = graphic.__dict__ if not isinstance(graphic, dict) else graphic
+                t.pop('draw_area', None)
                 graphics.append(json.dumps(t))
             with open(f'{file_name}.json', 'w') as f:
                 json.dump(graphics, f)
@@ -63,15 +64,18 @@ class Document:
             print(f'save to{file_name}!~')
 
     def open(self):
+        self.close()
         file = filedialog.askopenfiles()
-        data = json.load(file[0])
-        file[0].close()
-        if data:
-            for graphic in data:
-                self.draw_area.graphics.append(json.loads(graphic))
-            # print(self.draw_area.graphics)
-            print(f'read {file[0].name}!~')
-            self.draw_area.refresh()
+        try:
+            data = json.load(file[0])
+            file[0].close()
+            if data:
+                for graphic in data:
+                    self.draw_area.graphics.append(json.loads(graphic))
+                print(f'read {file[0].name}!~')
+                self.draw_area.refresh()
+        except Exception as e:
+            print(e, '文件名为空')
 
     def close(self):
         self.draw_area.graphics = list()
